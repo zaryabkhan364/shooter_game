@@ -9,10 +9,13 @@ pygame.display.set_caption('Shooter')
 
 #soldier class
 class Soldier(pygame.sprite.Sprite):
-    def __init__(self, x, y, scale, speed):
+    def __init__(self, char_type, x, y, scale, speed):
         pygame.sprite.Sprite.__init__(self)
+        self.char_type = char_type
+        self.direction = 1
+        self.flip = False
         self.speed = speed
-        img = pygame.image.load('assets/img/player/0.png')
+        img = pygame.image.load(f'assets/img/{self.char_type}/0.png')
         self.image = pygame.transform.scale(img, (int(img.get_width() * scale), int(img.get_height() * scale)))
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
@@ -24,17 +27,39 @@ class Soldier(pygame.sprite.Sprite):
 
         if moving_left:
             dx = -self.speed
+            self.flip = True
+            self.direction = -1
         if moving_right:
+            self.flip = False
+            self.direction = 1
             dx = self.speed
 
+        self.rect.x += dx
+        self.rect.y += dy
+
     def draw(self):
-        screen.blit(self.image, self.rect)
+        screen.blit(pygame.transform.flip(self.image, self.flip, False), self.rect)
 
 
-player = Soldier(200, 200, 2, 5)
+BG = (150, 200, 130)
+def draw_bg():
+    screen.fill(BG)        
+
+
+player = Soldier('player', 200, 200, 2, 5)
+enemy =  Soldier('enemy', 400, 200, 2, 5)
 
 run = True
+moving_left = True
+moving_right = True
+
 while run:
+
+    
+    draw_bg()
+    enemy.draw()
+    player.draw()
+    player.movement(moving_left, moving_right)
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -59,8 +84,6 @@ while run:
             if event.key == pygame.K_d:
                 moving_right = False
 
-
-    player.draw()
 
     pygame.display.update()
     clock.tick(60)
