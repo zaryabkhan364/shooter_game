@@ -15,8 +15,23 @@ class Soldier(pygame.sprite.Sprite):
         self.direction = 1
         self.flip = False
         self.speed = speed
-        img = pygame.image.load(f'assets/img/{self.char_type}/0.png')
-        self.image = pygame.transform.scale(img, (int(img.get_width() * scale), int(img.get_height() * scale)))
+        self.animation_list = []
+        self.frame_index = 0
+        self.update_time = pygame.time.get_ticks()
+        self.action = 0
+        temp_list = []
+        for i in range(5):
+            img = pygame.image.load(f'assets/img/{self.char_type}/idle/{i}.png')
+            img = pygame.transform.scale(img, (int(img.get_width() * scale), int(img.get_height() * scale)))
+            temp_list.append(img)
+        self.animation_list.append(temp_list)    
+        temp_list = []    
+        for i in range(6):
+            img = pygame.image.load(f'assets/img/{self.char_type}/run/{i}.png')
+            img = pygame.transform.scale(img, (int(img.get_width() * scale), int(img.get_height() * scale)))
+            temp_list.append(img)
+        self.animation_list.append(temp_list)    
+        self.image = self.animation_list[self.action][self.frame_index]
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
 
@@ -37,6 +52,20 @@ class Soldier(pygame.sprite.Sprite):
         self.rect.x += dx
         self.rect.y += dy
 
+    def update_animation(self):
+        #update animation
+        ANIMATION_COOLDOWN = 100
+        #update image depending on current frame
+        self.image = self.animation_list[self.frame_index]
+        #check if time has passed since the last update
+        if pygame.time.get_ticks() - self.update_time > ANIMATION_COOLDOWN:
+            self.update_time = pygame.time.get_ticks()
+            self.frame_index += 1
+        #list index keep in range
+        if self.frame_index >= len(self.animation_list):
+            self.frame_index = 0
+
+
     def draw(self):
         screen.blit(pygame.transform.flip(self.image, self.flip, False), self.rect)
 
@@ -47,7 +76,6 @@ def draw_bg():
 
 
 player = Soldier('player', 200, 200, 2, 5)
-enemy =  Soldier('enemy', 400, 200, 2, 5)
 
 run = True
 moving_left = True
@@ -55,10 +83,9 @@ moving_right = True
 
 while run:
 
-    
     draw_bg()
-    enemy.draw()
     player.draw()
+    player.update_animation()
     player.movement(moving_left, moving_right)
 
     for event in pygame.event.get():
