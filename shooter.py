@@ -56,14 +56,22 @@ class Soldier(pygame.sprite.Sprite):
         #update animation
         ANIMATION_COOLDOWN = 100
         #update image depending on current frame
-        self.image = self.animation_list[self.frame_index]
+        self.image = self.animation_list[self.action][self.frame_index]
         #check if time has passed since the last update
         if pygame.time.get_ticks() - self.update_time > ANIMATION_COOLDOWN:
             self.update_time = pygame.time.get_ticks()
             self.frame_index += 1
         #list index keep in range
-        if self.frame_index >= len(self.animation_list):
+        if self.frame_index >= len(self.animation_list[self.action]):
             self.frame_index = 0
+
+    def update_action(self, new_action):
+        #check if new action is diff from previous one
+        if new_action != self.action:
+            self.action = new_action
+            #update the animation settings
+            self.frame_index = 0
+            self.update_time = pygame.time.get_ticks()
 
 
     def draw(self):
@@ -86,6 +94,12 @@ while run:
     draw_bg()
     player.draw()
     player.update_animation()
+    
+    if moving_left or moving_right:
+        player.update_action(1) #moving animation
+    else:
+        player.update_action(0) #idle animation
+
     player.movement(moving_left, moving_right)
 
     for event in pygame.event.get():
