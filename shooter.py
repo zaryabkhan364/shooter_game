@@ -7,13 +7,21 @@ screen_height = int(screen_width * 0.8)
 screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption('Shooter')
 
+
+#game variables
+gravity = 0.75
+
 #soldier class
 class Soldier(pygame.sprite.Sprite):
+
     def __init__(self, char_type, x, y, scale, speed):
         pygame.sprite.Sprite.__init__(self)
         self.char_type = char_type
+        self.alive = True
         self.direction = 1
         self.flip = False
+        self.jump = False
+        self.vel_y = 0
         self.speed = speed
         self.animation_list = []
         self.frame_index = 0
@@ -48,6 +56,15 @@ class Soldier(pygame.sprite.Sprite):
             self.flip = False
             self.direction = 1
             dx = self.speed
+
+        if self.jump == True:
+            self.vel_y = -10
+            self.jump = False
+
+        self.vel_y += gravity
+        dy += self.vel_y
+
+
 
         self.rect.x += dx
         self.rect.y += dy
@@ -94,13 +111,14 @@ while run:
     draw_bg()
     player.draw()
     player.update_animation()
-    
-    if moving_left or moving_right:
-        player.update_action(1) #moving animation
-    else:
-        player.update_action(0) #idle animation
 
-    player.movement(moving_left, moving_right)
+    if player.alive:
+        if moving_left or moving_right:
+            player.update_action(1) #moving animation
+        else:
+            player.update_action(0) #idle animation
+
+        player.movement(moving_left, moving_right)
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -117,6 +135,9 @@ while run:
                 moving_left = True
             if event.key == pygame.K_d:
                 moving_right = True
+            #jump
+            if event.key == pygame.K_w and player.alive:
+                player.jump = True
 
         #key release
         if event.type == pygame.KEYUP:
