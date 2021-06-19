@@ -1,4 +1,5 @@
 import pygame
+import os
 
 pygame.init()
 clock = pygame.time.Clock()
@@ -27,18 +28,18 @@ class Soldier(pygame.sprite.Sprite):
         self.frame_index = 0
         self.update_time = pygame.time.get_ticks()
         self.action = 0
-        temp_list = []
-        for i in range(5):
-            img = pygame.image.load(f'assets/img/{self.char_type}/idle/{i}.png')
-            img = pygame.transform.scale(img, (int(img.get_width() * scale), int(img.get_height() * scale)))
-            temp_list.append(img)
-        self.animation_list.append(temp_list)    
-        temp_list = []    
-        for i in range(6):
-            img = pygame.image.load(f'assets/img/{self.char_type}/run/{i}.png')
-            img = pygame.transform.scale(img, (int(img.get_width() * scale), int(img.get_height() * scale)))
-            temp_list.append(img)
-        self.animation_list.append(temp_list)    
+
+        #load all images
+        animation_types = ['idle', 'run', 'jump']
+        for animation in animation_types:
+            temp_list = []
+            num_of_frames = len(os.listdir(f'img/{self.char_type}/{animation}'))
+            for i in range(num_of_frames):
+                img = pygame.image.load(f'assets/img/{self.char_type}/{animation}/{i}.png')
+                img = pygame.transform.scale(img, (int(img.get_width() * scale), int(img.get_height() * scale)))
+                temp_list.append(img)
+            self.animation_list.append(temp_list)  
+         
         self.image = self.animation_list[self.action][self.frame_index]
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
@@ -62,12 +63,15 @@ class Soldier(pygame.sprite.Sprite):
             self.jump = False
 
         self.vel_y += gravity
+
+        if self.vel_y > 10:
+            self.vel_y = 10
+
         dy += self.vel_y
-
-
 
         self.rect.x += dx
         self.rect.y += dy
+
 
     def update_animation(self):
         #update animation
@@ -96,8 +100,11 @@ class Soldier(pygame.sprite.Sprite):
 
 
 BG = (150, 200, 130)
+RED = (255, 0, 0)
+
 def draw_bg():
-    screen.fill(BG)        
+    screen.fill(BG)
+    pygame.draw.line(screen, RED, (0 ,300), (screen_width, 300))   
 
 
 player = Soldier('player', 200, 200, 2, 5)
