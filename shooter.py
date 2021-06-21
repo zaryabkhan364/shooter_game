@@ -22,6 +22,7 @@ class Soldier(pygame.sprite.Sprite):
         self.direction = 1
         self.flip = False
         self.jump = False
+        self.in_air = False
         self.vel_y = 0
         self.speed = speed
         self.animation_list = []
@@ -33,7 +34,7 @@ class Soldier(pygame.sprite.Sprite):
         animation_types = ['idle', 'run', 'jump']
         for animation in animation_types:
             temp_list = []
-            num_of_frames = len(os.listdir(f'img/{self.char_type}/{animation}'))
+            num_of_frames = len(os.listdir(f'assets/img/{self.char_type}/{animation}'))
             for i in range(num_of_frames):
                 img = pygame.image.load(f'assets/img/{self.char_type}/{animation}/{i}.png')
                 img = pygame.transform.scale(img, (int(img.get_width() * scale), int(img.get_height() * scale)))
@@ -58,17 +59,25 @@ class Soldier(pygame.sprite.Sprite):
             self.direction = 1
             dx = self.speed
 
-        if self.jump == True:
+        #jump
+        if self.jump == True and self.in_air == False:
             self.vel_y = -10
             self.jump = False
+            self.in_air = True
 
+        #apply gravity
         self.vel_y += gravity
-
         if self.vel_y > 10:
             self.vel_y = 10
 
         dy += self.vel_y
 
+        #check collisions with floor
+        if self.rect.bottom + dy > 300:
+            dy = 300 - self.rect.bottom
+            self.in_air = False
+
+        #update rectangle position
         self.rect.x += dx
         self.rect.y += dy
 
@@ -120,8 +129,12 @@ while run:
     player.update_animation()
 
     if player.alive:
-        if moving_left or moving_right:
+        if player.in_air:
+            player.update_action(2) #jump
+            
+        elif moving_left or moving_right:
             player.update_action(1) #moving animation
+
         else:
             player.update_action(0) #idle animation
 
