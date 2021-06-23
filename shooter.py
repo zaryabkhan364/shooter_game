@@ -9,8 +9,12 @@ screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption('Shooter')
 
 
+#images
+bullet_img = pygame.image.load('assets/img/icon/bullet/bullet.png').convert_alpha()
+
 #game variables
 gravity = 0.75
+shoot = False
 
 #soldier class
 class Soldier(pygame.sprite.Sprite):
@@ -20,6 +24,7 @@ class Soldier(pygame.sprite.Sprite):
         self.char_type = char_type
         self.alive = True
         self.direction = 1
+        self.shoot_cooldown = 0
         self.flip = False
         self.jump = False
         self.in_air = False
@@ -36,7 +41,7 @@ class Soldier(pygame.sprite.Sprite):
             temp_list = []
             num_of_frames = len(os.listdir(f'assets/img/{self.char_type}/{animation}'))
             for i in range(num_of_frames):
-                img = pygame.image.load(f'assets/img/{self.char_type}/{animation}/{i}.png')
+                img = pygame.image.load(f'assets/img/{self.char_type}/{animation}/{i}.png').convert_alpha()
                 img = pygame.transform.scale(img, (int(img.get_width() * scale), int(img.get_height() * scale)))
                 temp_list.append(img)
             self.animation_list.append(temp_list)  
@@ -44,6 +49,12 @@ class Soldier(pygame.sprite.Sprite):
         self.image = self.animation_list[self.action][self.frame_index]
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
+
+    def update(self):
+        self.update_animation()
+        #update cool down
+        if self.shoot_cooldown > 0:
+            self.shoot_cooldown -= 1    
 
     def movement(self, moving_left, moving_right):
         #reset movement variables
@@ -81,6 +92,12 @@ class Soldier(pygame.sprite.Sprite):
         self.rect.x += dx
         self.rect.y += dy
 
+    def shoot(self):
+        if self.shoot_cooldown == 0:
+            self.shoot_cooldown = 20
+            bullet = Bullet(self.rect.centerx + (0.6 * self.rect.size[0] * self.direction), self.rect.centery, self.direction)
+            bullet_group.add(bullet)
+
 
     def update_animation(self):
         #update animation
@@ -108,7 +125,7 @@ class Soldier(pygame.sprite.Sprite):
         screen.blit(pygame.transform.flip(self.image, self.flip, False), self.rect)
 
 
-BG = (150, 200, 130)
+BG = (100, 100, 130)
 RED = (255, 0, 0)
 
 def draw_bg():
@@ -116,6 +133,25 @@ def draw_bg():
     pygame.draw.line(screen, RED, (0 ,300), (screen_width, 300))   
 
 
+class Bullet(pygame.sprite.Sprite):
+    def __init__(self, x, y, direction):
+        pygame.sprite.Sprite.__init__(self)
+        self.speed = 10
+        self.image = bullet_img
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+        self.direction = direction
+
+    def update(self):
+        #move bullet
+        self.rect.x += (self.direction * self.speed)
+        #check if bullet has gone off screen
+        if self.rect.right < 0 or self.rect.left > screen_width:
+            self.kill()
+
+
+#create sprite groups
+bullet_group = pygame.sprite.Group()
 player = Soldier('player', 200, 200, 2, 5)
 
 run = True
@@ -123,12 +159,20 @@ moving_left = True
 moving_right = True
 
 while run:
-
+    #backgroud
     draw_bg()
     player.draw()
-    player.update_animation()
+    player.update()
+
+    #update and draw groups
+    bullet_group.update()
+    bullet_group.draw(screen)
 
     if player.alive:
+
+        if shoot:
+            player.shoot()
+            
         if player.in_air:
             player.update_action(2) #jump
             
@@ -155,6 +199,10 @@ while run:
                 moving_left = True
             if event.key == pygame.K_d:
                 moving_right = True
+
+            if event.key == pygame.K_SPACE:
+                shoot = True
+
             #jump
             if event.key == pygame.K_w and player.alive:
                 player.jump = True
@@ -165,6 +213,12 @@ while run:
                 moving_left = False
             if event.key == pygame.K_d:
                 moving_right = False
+            if event.key == pygame.K_SPACE:
+                shoot = False
+
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            shoot = True   
+
 
 
     pygame.display.update()
