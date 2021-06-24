@@ -19,12 +19,14 @@ shoot = False
 #soldier class
 class Soldier(pygame.sprite.Sprite):
 
-    def __init__(self, char_type, x, y, scale, speed):
+    def __init__(self, char_type, x, y, scale, speed, ammo):
         pygame.sprite.Sprite.__init__(self)
         self.char_type = char_type
         self.alive = True
         self.direction = 1
         self.shoot_cooldown = 0
+        self.ammo = ammo
+        self.start_ammo = ammo
         self.flip = False
         self.jump = False
         self.in_air = False
@@ -93,10 +95,14 @@ class Soldier(pygame.sprite.Sprite):
         self.rect.y += dy
 
     def shoot(self):
-        if self.shoot_cooldown == 0:
+        if self.shoot_cooldown == 0 and self.ammo > 0:
             self.shoot_cooldown = 20
             bullet = Bullet(self.rect.centerx + (0.6 * self.rect.size[0] * self.direction), self.rect.centery, self.direction)
             bullet_group.add(bullet)
+            #reduce ammo
+            self.ammo -= 1
+
+
 
 
     def update_animation(self):
@@ -149,10 +155,22 @@ class Bullet(pygame.sprite.Sprite):
         if self.rect.right < 0 or self.rect.left > screen_width:
             self.kill()
 
+        #check collisions with the players
+        if pygame.sprite.spritecollide(player, bullet_group, False):
+            if player.alive:
+                self.kill()
+
+        if pygame.sprite.spritecollide(enemy, bullet_group, False):
+            if enemy.alive:
+                self.kill()        
+
+
 
 #create sprite groups
 bullet_group = pygame.sprite.Group()
-player = Soldier('player', 200, 200, 2, 5)
+player = Soldier('player', 200, 200, 2, 5, 20)
+
+enemy = Soldier('enemy', 400, 200, 2, 5, 20)
 
 run = True
 moving_left = True
@@ -163,6 +181,9 @@ while run:
     draw_bg()
     player.draw()
     player.update()
+
+    enemy.draw()
+    enemy.update()
 
     #update and draw groups
     bullet_group.update()
@@ -217,7 +238,10 @@ while run:
                 shoot = False
 
         if event.type == pygame.MOUSEBUTTONDOWN:
-            shoot = True   
+            shoot = True
+
+        if event.type == pygame.MOUSEBUTTONUP:
+            shoot = False    
 
 
 
